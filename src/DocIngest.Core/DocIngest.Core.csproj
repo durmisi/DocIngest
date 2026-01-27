@@ -4,6 +4,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>DocIngest.Core</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>DocIngest Team</Authors>
+    <Description>A .NET library for document ingestion and processing pipelines.</Description>
+    <PackageTags>document;ingestion;pipeline;ocr;ai</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
