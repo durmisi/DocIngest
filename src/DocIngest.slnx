@@ -1,6 +1,4 @@
 <Solution>
-  <Project Path="DocIngest.AppHost/DocIngest.AppHost.csproj" />
-  <Project Path="DocIngest.ServiceDefaults/DocIngest.ServiceDefaults.csproj" />
   <Project Path="DocIngest.Core/DocIngest.Core.csproj" />
   <Project Path="DocIngest.Tests/DocIngest.Tests.csproj" />
 </Solution>
