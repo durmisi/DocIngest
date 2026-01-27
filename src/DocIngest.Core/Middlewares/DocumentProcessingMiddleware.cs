@@ -5,6 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using DocIngest.Core.Services;
+using Xceed.Words.NET;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 
 namespace DocIngest.Core.Middlewares;
 
@@ -49,12 +53,16 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
             var documentFiles = document.Files.Where(f => IsDocumentFile(f.Name)).ToList();
             if (documentFiles.Any())
             {
-                // Add existing document files to processed list
+                // Extract text from existing document files
+                var contentBuilder = new System.Text.StringBuilder();
                 foreach (var docFile in documentFiles)
                 {
+                    var extractedText = await ExtractTextFromDocumentAsync(docFile.Path);
+                    contentBuilder.AppendLine(extractedText);
                     processedDocuments.Add(docFile.Path);
                 }
-                _logger.LogInformation($"Added existing document files for {document.Name}");
+                document.Content = contentBuilder.ToString();
+                _logger.LogInformation($"Extracted content from existing document files for {document.Name}");
                 continue;
             }
 
@@ -76,6 +84,9 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
 
             // OCR
             var text = await _ocrService.ExtractTextAsync(combinedImage);
+
+            // Set content on document
+            document.Content = text;
 
             // Generate output
             var outputPath = await _documentGenerator.GenerateDocumentAsync(text, document.Name, outputFormat, outputDir);
@@ -129,5 +140,37 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         combined.Dispose();
 
         return ms.ToArray();
+    }
+
+    private async Task<string> ExtractTextFromDocumentAsync(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        return extension switch
+        {
+            ".docx" => ExtractTextFromDocx(filePath),
+            ".doc" => ExtractTextFromDocx(filePath), // Assuming DocX can handle .doc, but may need conversion
+            ".pdf" => ExtractTextFromPdf(filePath),
+            _ => string.Empty
+        };
+    }
+
+    private string ExtractTextFromDocx(string filePath)
+    {
+        using var doc = DocX.Load(filePath);
+        return doc.Text;
+    }
+
+    private string ExtractTextFromPdf(string filePath)
+    {
+        using var pdfReader = new PdfReader(filePath);
+        using var pdfDoc = new PdfDocument(pdfReader);
+        var strategy = new SimpleTextExtractionStrategy();
+        var extractedText = string.Empty;
+        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
+        {
+            var page = pdfDoc.GetPage(i);
+            extractedText += PdfTextExtractor.GetTextFromPage(page, strategy);
+        }
+        return extractedText;
     }
 }

@@ -22,6 +22,21 @@ public class Document
     /// Gets or sets the list of files in this document.
     /// </summary>
     public List<FileInfo> Files { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the extracted text content of the document.
+    /// </summary>
+    public string Content { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the list of tags for categorization.
+    /// </summary>
+    public List<string> Tags { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the list of insights extracted from the document.
+    /// </summary>
+    public List<string> Insights { get; set; } = new();
 }
 
 /// <summary>
