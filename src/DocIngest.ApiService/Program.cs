@@ -1,5 +1,6 @@
 using DocIngest.Core;
 using DocIngest.Core.Middlewares;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +21,12 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Example pipeline usage
-app.MapGet("/process", async () =>
+app.MapGet("/process", async ([FromServices] ILogger<Program> logger) =>
 {
     var pipelineBuilder = new PipelineBuilder();
     pipelineBuilder.Use(new LoggingMiddleware());
+    string documentsFolder = "C:\\Temp\\Documents"; 
+    pipelineBuilder.Use(new FolderTraversalMiddleware(documentsFolder, logger));
     pipelineBuilder.Use(async (context, next) =>
     {
         context.Items["Step1"] = "Value from Step1";
