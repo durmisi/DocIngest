@@ -31,7 +31,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DocIngest.AppHost\DocIngest.AppHost.csproj" />
     <ProjectReference Include="..\DocIngest.Core\DocIngest.Core.csproj" />
   </ItemGroup>
 
