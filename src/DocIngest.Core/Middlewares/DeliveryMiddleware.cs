@@ -6,6 +6,7 @@ namespace DocIngest.Core.Middlewares;
 
 /// <summary>
 /// Middleware that delivers processed documents to organized locations.
+/// Organization criteria defaults to "date" (yyyy-MM-dd), but can be customized via context.
 /// </summary>
 public class DeliveryMiddleware : IPipelineMiddleware
 {
@@ -30,7 +31,7 @@ public class DeliveryMiddleware : IPipelineMiddleware
             return;
         }
 
-        var organizationCriteria = context.Items.ContainsKey("OrganizationCriteria") ? context.Items["OrganizationCriteria"] as string ?? "type" : "type";
+        var organizationCriteria = context.Items.ContainsKey("OrganizationCriteria") ? context.Items["OrganizationCriteria"] as string ?? "date" : "date";
 
         foreach (var document in documents)
         {

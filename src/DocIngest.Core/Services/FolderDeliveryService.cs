@@ -8,6 +8,9 @@ namespace DocIngest.Core.Services;
 
 /// <summary>
 /// Implementation of IDeliveryService that delivers documents to organized local folders.
+/// Folder structure: organizationCriteria / [documentName] / files (documentName omitted when criteria is "name").
+/// Supports organization by: type (first tag), date (yyyy-MM-dd), year (yyyy), month (yyyy-MM), name (document name).
+/// Defaults to date-based organization.
 /// </summary>
 public class FolderDeliveryService : IDeliveryService
 {
@@ -23,7 +26,9 @@ public class FolderDeliveryService : IDeliveryService
     public async Task DeliverAsync(Document document, string organizationCriteria)
     {
         var organizationKey = GetOrganizationKey(document, organizationCriteria);
-        var targetDir = Path.Combine(_baseDeliveryPath, organizationKey);
+        var targetDir = organizationCriteria.ToLowerInvariant() == "name"
+            ? Path.Combine(_baseDeliveryPath, organizationKey)
+            : Path.Combine(_baseDeliveryPath, organizationKey, document.Name);
         Directory.CreateDirectory(targetDir);
 
         foreach (var processedFile in document.ProcessedFiles)
@@ -44,6 +49,8 @@ public class FolderDeliveryService : IDeliveryService
             "type" => document.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault() ?? "unknown",
             "date" => dirInfo.CreationTime.ToString("yyyy-MM-dd"),
             "year" => dirInfo.CreationTime.ToString("yyyy"),
+            "month" => dirInfo.CreationTime.ToString("yyyy-MM"),
+            "name" => document.Name,
             _ => dirInfo.CreationTime.ToString("yyyy-MM-dd") // default to date
         };
     }

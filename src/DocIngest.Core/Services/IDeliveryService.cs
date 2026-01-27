@@ -5,6 +5,7 @@ namespace DocIngest.Core.Services;
 
 /// <summary>
 /// Interface for delivering processed documents to organized locations.
+/// Supported organization criteria: "type" (by first tag), "date" (yyyy-MM-dd), "year" (yyyy), "month" (yyyy-MM), "name" (document name).
 /// </summary>
 public interface IDeliveryService
 {
