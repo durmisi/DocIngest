@@ -59,7 +59,7 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
                 {
                     var extractedText = await ExtractTextFromDocumentAsync(docFile.Path);
                     contentBuilder.AppendLine(extractedText);
-                    processedDocuments.Add(docFile.Path);
+                    document.ProcessedDocuments.Add(docFile.Path);
                 }
                 document.Content = contentBuilder.ToString();
                 _logger.LogInformation($"Extracted content from existing document files for {document.Name}");
@@ -91,6 +91,7 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
             // Generate output
             var outputPath = await _documentGenerator.GenerateDocumentAsync(text, document.Name, outputFormat, outputDir);
             processedDocuments.Add(outputPath);
+            document.ProcessedDocuments.Add(outputPath);
         }
 
         context.Items["ProcessedDocuments"] = processedDocuments;

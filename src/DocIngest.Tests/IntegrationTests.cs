@@ -36,6 +36,9 @@ public class IntegrationTests : IDisposable
         services.AddTransient<DocumentProcessingMiddleware>();
         services.AddTransient<DocumentTraversalMiddleware>();
         services.AddTransient<LoggingMiddleware>();
+        services.AddTransient<AiCategorizationMiddleware>();
+        services.AddTransient<DeliveryMiddleware>();
+        services.AddSingleton<IDeliveryService>(sp => new FolderDeliveryService(Path.Combine(_tempOutputDir, "delivered"), sp.GetRequiredService<ILogger<FolderDeliveryService>>()));
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { { "ImageProcessing:OutputFormat", "PDF" } })
             .Build());
@@ -66,6 +69,7 @@ public class IntegrationTests : IDisposable
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         builder.Use(new DocumentTraversalMiddleware(_tempInputDir, loggerFactory.CreateLogger<DocumentTraversalMiddleware>()));
         builder.Use(new DocumentProcessingMiddleware(_serviceProvider.GetRequiredService<IOcrService>(), _serviceProvider.GetRequiredService<IConfiguration>(), loggerFactory.CreateLogger<DocumentProcessingMiddleware>(), _serviceProvider.GetRequiredService<IDocumentGenerator>()));
+        builder.Use(_serviceProvider.GetRequiredService<DeliveryMiddleware>());
         builder.Use(_serviceProvider.GetRequiredService<LoggingMiddleware>());
         var pipeline = builder.Build();
 

@@ -37,6 +37,11 @@ public class Document
     /// Gets or sets the list of insights extracted from the document.
     /// </summary>
     public List<string> Insights { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the list of paths to processed document files.
+    /// </summary>
+    public List<string> ProcessedDocuments { get; set; } = new();
 }
 
 /// <summary>
