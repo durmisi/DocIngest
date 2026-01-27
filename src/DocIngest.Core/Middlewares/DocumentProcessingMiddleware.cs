@@ -44,7 +44,7 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         }
 
         var outputFormat = _configuration.GetValue<string>("ImageProcessing:OutputFormat") ?? "Word";
-        var outputDir = context.Items.ContainsKey("OutputDirectory") ? context.Items["OutputDirectory"] as string : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
+        var outputDir = (context.Items["OutputDirectory"] as string) ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
         Directory.CreateDirectory(outputDir);
 
         foreach (var document in documents)
