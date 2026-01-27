@@ -19,9 +19,15 @@ public class DocumentTraversalMiddleware : IPipelineMiddleware
     /// </summary>
     /// <param name="rootFolderPath">The path to the root folder to traverse.</param>
     /// <param name="logger">Optional logger for error handling.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="rootFolderPath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="rootFolderPath"/> does not exist or is not a directory.</exception>
     public DocumentTraversalMiddleware(string rootFolderPath, ILogger? logger = null)
     {
         _rootFolderPath = rootFolderPath ?? throw new ArgumentNullException(nameof(rootFolderPath));
+        if (!Directory.Exists(_rootFolderPath))
+        {
+            throw new ArgumentException($"The specified root folder path does not exist: {_rootFolderPath}", nameof(rootFolderPath));
+        }
         _logger = logger;
     }
 
@@ -62,6 +68,16 @@ public class DocumentTraversalMiddleware : IPipelineMiddleware
                                 Size = fileInfo.Length
                             });
                         }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            _logger?.LogWarning(ex, "Access denied for file: {FilePath}", filePath);
+                            // Skip this file and continue
+                        }
+                        catch (IOException ex)
+                        {
+                            _logger?.LogWarning(ex, "I/O error accessing file: {FilePath}", filePath);
+                            // Skip this file and continue
+                        }
                         catch (Exception ex)
                         {
                             _logger?.LogWarning(ex, "Failed to get info for file: {FilePath}", filePath);
@@ -71,12 +87,32 @@ public class DocumentTraversalMiddleware : IPipelineMiddleware
 
                     documents.Add(document);
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger?.LogWarning(ex, "Access denied for subfolder: {Subfolder}", subfolder);
+                    // Skip this subfolder and continue
+                }
+                catch (IOException ex)
+                {
+                    _logger?.LogWarning(ex, "I/O error accessing subfolder: {Subfolder}", subfolder);
+                    // Skip this subfolder and continue
+                }
                 catch (Exception ex)
                 {
                     _logger?.LogWarning(ex, "Failed to process subfolder: {Subfolder}", subfolder);
                     // Skip this subfolder and continue
                 }
             }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger?.LogError(ex, "Access denied for root folder: {RootFolder}", _rootFolderPath);
+            // Proceed with empty list
+        }
+        catch (IOException ex)
+        {
+            _logger?.LogError(ex, "I/O error accessing root folder: {RootFolder}", _rootFolderPath);
+            // Proceed with empty list
         }
         catch (Exception ex)
         {
