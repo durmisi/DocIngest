@@ -50,48 +50,36 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
 
         foreach (var document in documents)
         {
-            var documentFiles = document.Files.Where(f => IsDocumentFile(f.Name)).ToList();
-            if (documentFiles.Any())
+            if (!document.Files.Any())
             {
-                // Extract text from existing document files
-                var contentBuilder = new System.Text.StringBuilder();
-                foreach (var docFile in documentFiles)
+                _logger.LogInformation($"No files in document {document.Name}");
+                continue;
+            }
+
+            bool allImages = document.Files.All(f => IsImageFile(f.Name));
+
+            if (allImages)
+            {
+                // Combine images, OCR, generate one document
+                var combinedImage = await CombineImagesAsync(document.Files);
+                var ocrText = await _ocrService.ExtractTextAsync(combinedImage);
+
+                // Generate one combined document for all images
+                var outputPath = await _documentGenerator.GenerateDocumentAsync(ocrText, document.Name, outputFormat, outputDir);
+                processedDocuments.Add(outputPath);
+                document.ProcessedFiles.Add(new ProcessedFile { Path = outputPath });
+                _logger.LogInformation($"Processed {document.Files.Count} image(s) for {document.Name}, generated {outputPath}");
+            }
+            else
+            {
+                // Copy all files as is
+                foreach (var file in document.Files)
                 {
-                    var extractedText = await ExtractTextFromDocumentAsync(docFile.Path);
-                    contentBuilder.AppendLine(extractedText);
-                    document.ProcessedDocuments.Add(docFile.Path);
+                    processedDocuments.Add(file.Path);
+                    document.ProcessedFiles.Add(new ProcessedFile { Path = file.Path });
+                    _logger.LogInformation($"Added file {file.Name} for {document.Name} to processed documents");
                 }
-                document.Content = contentBuilder.ToString();
-                _logger.LogInformation($"Extracted content from existing document files for {document.Name}");
-                continue;
             }
-
-            var imageFiles = document.Files
-                .Where(f => IsImageFile(f.Name))
-                .OrderBy(f => f.LastModified)
-                .ToList();
-
-            if (!imageFiles.Any())
-            {
-                _logger.LogInformation($"No processable files in document {document.Name}");
-                continue;
-            }
-
-            _logger.LogInformation($"Processing document {document.Name} with {imageFiles.Count} images");
-
-            // Load and combine images
-            var combinedImage = await CombineImagesAsync(imageFiles);
-
-            // OCR
-            var text = await _ocrService.ExtractTextAsync(combinedImage);
-
-            // Set content on document
-            document.Content = text;
-
-            // Generate output
-            var outputPath = await _documentGenerator.GenerateDocumentAsync(text, document.Name, outputFormat, outputDir);
-            processedDocuments.Add(outputPath);
-            document.ProcessedDocuments.Add(outputPath);
         }
 
         context.Items["ProcessedDocuments"] = processedDocuments;

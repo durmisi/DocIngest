@@ -3,6 +3,12 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Collections.Generic;
+using DocIngest.Core.Services;
+using System.IO;
+using Xceed.Words.NET;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 
 namespace DocIngest.Core.Middlewares;
 
@@ -12,12 +18,14 @@ namespace DocIngest.Core.Middlewares;
 public class AiCategorizationMiddleware : IPipelineMiddleware
 {
     private readonly IChatClient _chatClient;
+    private readonly IOcrService _ocrService;
     private readonly ILogger<AiCategorizationMiddleware> _logger;
 
-    public AiCategorizationMiddleware(IChatClient chatClient, ILogger<AiCategorizationMiddleware> _logger)
+    public AiCategorizationMiddleware(IChatClient chatClient, IOcrService ocrService, ILogger<AiCategorizationMiddleware> logger)
     {
         _chatClient = chatClient;
-        this._logger = _logger;
+        _ocrService = ocrService;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
@@ -34,39 +42,99 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
 
         foreach (var document in documents)
         {
-            if (string.IsNullOrEmpty(document.Content))
+            foreach (var processedFile in document.ProcessedFiles)
             {
-                _logger.LogInformation($"No content to categorize for document {document.Name}");
-                continue;
-            }
-
-            try
-            {
-                var messages = new List<ChatMessage>
+                var text = await ExtractTextFromFileAsync(processedFile.Path);
+                if (string.IsNullOrEmpty(text))
                 {
-                    new ChatMessage(ChatRole.User, $"Categorize the following document content. Provide a JSON response with 'tags' as an array of strings (e.g., ['invoice', 'finance']) and 'insights' as an array of strings (key insights like 'Total Amount: $100', 'Date: 2023-01-01').\n\nContent:\n{document.Content}")
-                };
-
-                var response = await _chatClient.GetResponseAsync(messages);
-
-                var result = JsonSerializer.Deserialize<AiResponse>(response.Messages.Last().Text);
-
-                if (result != null)
-                {
-                    document.Tags = result.Tags ?? new List<string>();
-                    document.Insights = result.Insights ?? new List<string>();
+                    _logger.LogInformation($"No text extracted for file {processedFile.Path}");
+                    continue;
                 }
 
-                _logger.LogInformation($"Categorized document {document.Name} with {document.Tags.Count} tags and {document.Insights.Count} insights");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error categorizing document {document.Name}");
+                try
+                {
+                    var messages = new List<ChatMessage>
+                    {
+                        new ChatMessage(ChatRole.User, $"Categorize the following document content. Provide a JSON response with 'tags' as an array of strings (e.g., ['invoice', 'finance']) and 'insights' as an array of strings (key insights like 'Total Amount: $100', 'Date: 2023-01-01').\n\nContent:\n{text}")
+                    };
+
+                    var response = await _chatClient.GetResponseAsync(messages);
+                    var result = JsonSerializer.Deserialize<AiResponse>(response.Messages.Last().Text);
+
+                    if (result != null)
+                    {
+                        processedFile.Tags = result.Tags ?? new List<string>();
+                        processedFile.Insights = result.Insights ?? new List<string>();
+                    }
+
+                    _logger.LogInformation($"Categorized file {processedFile.Path} with {processedFile.Tags.Count} tags and {processedFile.Insights.Count} insights");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error categorizing file {processedFile.Path}");
+                }
             }
         }
 
         _logger.LogInformation("AI categorization completed");
         await next(context);
+    }
+
+    private async Task<string> ExtractTextFromFileAsync(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        if (IsImageFile(filePath))
+        {
+            // For images, perform OCR
+            var imageBytes = await File.ReadAllBytesAsync(filePath);
+            return await _ocrService.ExtractTextAsync(imageBytes);
+        }
+        else if (IsDocumentFile(filePath))
+        {
+            return extension switch
+            {
+                ".docx" => ExtractTextFromDocx(filePath),
+                ".doc" => ExtractTextFromDocx(filePath), // Assuming DocX can handle .doc
+                ".pdf" => ExtractTextFromPdf(filePath),
+                _ => string.Empty
+            };
+        }
+        else
+        {
+            return string.Empty;
+        }
+    }
+
+    private bool IsImageFile(string fileName)
+    {
+        var extensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".tiff" };
+        return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsDocumentFile(string fileName)
+    {
+        var extensions = new[] { ".docx", ".doc", ".pdf" };
+        return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string ExtractTextFromDocx(string filePath)
+    {
+        using var doc = DocX.Load(filePath);
+        return doc.Text;
+    }
+
+    private string ExtractTextFromPdf(string filePath)
+    {
+        using var pdfReader = new PdfReader(filePath);
+        using var pdfDoc = new PdfDocument(pdfReader);
+        var strategy = new SimpleTextExtractionStrategy();
+        var extractedText = string.Empty;
+        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
+        {
+            var page = pdfDoc.GetPage(i);
+            extractedText += PdfTextExtractor.GetTextFromPage(page, strategy);
+        }
+        return extractedText;
     }
 
     private class AiResponse

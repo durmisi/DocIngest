@@ -24,9 +24,20 @@ public class Document
     public List<FileInfo> Files { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the extracted text content of the document.
+    /// Gets or sets the list of processed files with metadata.
     /// </summary>
-    public string Content { get; set; } = string.Empty;
+    public List<ProcessedFile> ProcessedFiles { get; set; } = new();
+}
+
+/// <summary>
+/// Represents a processed file with its path and AI-extracted metadata.
+/// </summary>
+public class ProcessedFile
+{
+    /// <summary>
+    /// Gets or sets the path of the processed file.
+    /// </summary>
+    public string Path { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the list of tags for categorization.
@@ -34,14 +45,9 @@ public class Document
     public List<string> Tags { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the list of insights extracted from the document.
+    /// Gets or sets the list of insights extracted from the file.
     /// </summary>
     public List<string> Insights { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets the list of paths to processed document files.
-    /// </summary>
-    public List<string> ProcessedDocuments { get; set; } = new();
 }
 
 /// <summary>

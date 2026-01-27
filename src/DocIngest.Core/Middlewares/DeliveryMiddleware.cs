@@ -34,7 +34,7 @@ public class DeliveryMiddleware : IPipelineMiddleware
 
         foreach (var document in documents)
         {
-            if (document.ProcessedDocuments.Any())
+            if (document.ProcessedFiles.Any())
             {
                 await _deliveryService.DeliverAsync(document, organizationCriteria);
             }

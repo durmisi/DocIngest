@@ -76,10 +76,11 @@ public class IntegrationTests : IDisposable
         // Act: Execute pipeline
         await pipeline(context);
 
-        // Assert: Verify outputs (e.g., check for generated PDF file in output dir)
-        var outputFiles = Directory.GetFiles(_tempOutputDir);
+        // Assert: Verify outputs (e.g., check for delivered files in organized folder)
+        var deliveredDir = Path.Combine(_tempOutputDir, "delivered");
+        var outputFiles = Directory.GetFiles(deliveredDir, "*", SearchOption.AllDirectories);
         Assert.NotEmpty(outputFiles); // At least one output file should exist
-        Assert.True(outputFiles.Any(f => f.EndsWith(".pdf") || f.EndsWith(".txt")), "Expected a PDF or TXT file to be generated");
+        Assert.True(outputFiles.Any(f => f.EndsWith(".pdf") || f.EndsWith(".txt")), "Expected a PDF or TXT file to be generated and delivered");
     }
 
     private void CreateSampleImage(string path, string text)

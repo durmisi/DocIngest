@@ -26,8 +26,9 @@ public class FolderDeliveryService : IDeliveryService
         var targetDir = Path.Combine(_baseDeliveryPath, organizationKey);
         Directory.CreateDirectory(targetDir);
 
-        foreach (var filePath in document.ProcessedDocuments)
+        foreach (var processedFile in document.ProcessedFiles)
         {
+            var filePath = processedFile.Path;
             var fileName = Path.GetFileName(filePath);
             var targetPath = Path.Combine(targetDir, fileName);
             File.Copy(filePath, targetPath, overwrite: true);
@@ -37,8 +38,13 @@ public class FolderDeliveryService : IDeliveryService
 
     private string GetOrganizationKey(Document document, string criteria)
     {
-        // By default, organize by date created (full date of the document folder)
         var dirInfo = new DirectoryInfo(document.Path);
-        return dirInfo.CreationTime.ToString("yyyy-MM-dd");
+        return criteria.ToLowerInvariant() switch
+        {
+            "type" => document.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault() ?? "unknown",
+            "date" => dirInfo.CreationTime.ToString("yyyy-MM-dd"),
+            "year" => dirInfo.CreationTime.ToString("yyyy"),
+            _ => dirInfo.CreationTime.ToString("yyyy-MM-dd") // default to date
+        };
     }
 }
