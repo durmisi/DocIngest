@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DocIngest.ApiService\DocIngest.ApiService.csproj" />
-    <ProjectReference Include="..\DocIngest.Web\DocIngest.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
