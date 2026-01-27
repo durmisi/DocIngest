@@ -141,7 +141,3 @@ var ocrService = new CustomOcrService();
 ## Contributing
 
 Contributions are welcome! Extend middlewares, add services, or improve AI prompts. Ensure tests pass and follow the modular design.
-
-## License
-
-MIT
