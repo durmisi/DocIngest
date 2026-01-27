@@ -57,27 +57,38 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
 
             // Process images
             var imageFiles = document.Files.Where(f => IsImageFile(f.Name)).OrderBy(f => GetPageNumber(f.Name)).ToList();
-            if (imageFiles.Any())
+            var imageGroups = imageFiles.GroupBy(f => GetGroupKey(f.Name));
+            foreach (var group in imageGroups)
             {
-                var combinedImage = await CombineImagesAsync(imageFiles);
+                var sortedGroup = group.OrderBy(f => GetPageNumber(f.Name)).ToList();
+                var combinedImage = await CombineImagesAsync(sortedGroup);
                 var ocrText = await _ocrService.ExtractTextAsync(combinedImage);
-                var outputPath = await _documentGenerator.GenerateDocumentAsync(ocrText, document.Name + "_images", outputFormat, outputDir);
+                var groupName = Path.GetFileNameWithoutExtension(group.Key);
+                var outputPath = await _documentGenerator.GenerateDocumentAsync(ocrText, document.Name + "_" + groupName, outputFormat, outputDir);
                 document.ProcessedFiles.Add(new ProcessedFile { Path = outputPath });
-                _logger.LogInformation($"Processed images for {document.Name}, generated {outputPath}");
+                _logger.LogInformation($"Processed image group {groupName} for {document.Name}, generated {outputPath}");
             }
 
             // Process PDFs
             var pdfFiles = document.Files.Where(f => IsPdfFile(f.Name)).ToList();
-            foreach (var pdf in pdfFiles)
+            var pdfGroups = pdfFiles.GroupBy(f => GetGroupKey(f.Name));
+            foreach (var group in pdfGroups)
             {
-                var pdfText = ExtractTextFromPdf(pdf.Path);
-                var outputPath = await _documentGenerator.GenerateDocumentAsync(pdfText, Path.GetFileNameWithoutExtension(pdf.Name), outputFormat, outputDir);
+                var texts = new List<string>();
+                foreach (var pdf in group)
+                {
+                    var pdfText = ExtractTextFromPdf(pdf.Path);
+                    texts.Add(pdfText);
+                }
+                var combinedText = string.Join("\n\n--- Page Break ---\n\n", texts);
+                var groupName = Path.GetFileNameWithoutExtension(group.Key);
+                var outputPath = await _documentGenerator.GenerateDocumentAsync(combinedText, document.Name + "_" + groupName, outputFormat, outputDir);
                 document.ProcessedFiles.Add(new ProcessedFile { Path = outputPath });
-                _logger.LogInformation($"Processed PDF {pdf.Name} for {document.Name}, generated {outputPath}");
+                _logger.LogInformation($"Processed PDF group {groupName} for {document.Name}, generated {outputPath}");
             }
 
-            // Add TXT and office files
-            var otherFiles = document.Files.Where(f => IsTxtFile(f.Name) || IsOfficeFile(f.Name)).ToList();
+            // Add other files (not images or PDFs)
+            var otherFiles = document.Files.Where(f => !IsImageFile(f.Name) && !IsPdfFile(f.Name)).ToList();
             foreach (var file in otherFiles)
             {
                 document.ProcessedFiles.Add(new ProcessedFile { Path = file.Path });
@@ -97,26 +108,24 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
     }
 
-    private bool IsDocumentFile(string fileName)
-    {
-        var extensions = new[] { ".docx", ".doc", ".pdf" };
-        return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
-    }
-
+   
     private bool IsPdfFile(string fileName) => fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
-    private bool IsTxtFile(string fileName) => fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);
-
-    private bool IsOfficeFile(string fileName)
-    {
-        var extensions = new[] { ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt" };
-        return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
-    }
-
+    
     private int GetPageNumber(string fileName)
     {
         var match = Regex.Match(fileName, @"\d+");
         return match.Success ? int.Parse(match.Value) : 0;
+    }
+
+    private string GetGroupKey(string fileName)
+    {
+        var match = Regex.Match(fileName, @"^(.*?)(\d+)(.*)$");
+        if (match.Success)
+        {
+            return match.Groups[1].Value + match.Groups[3].Value;
+        }
+        return fileName;
     }
 
     private async Task<byte[]> CombineImagesAsync(List<FileInfo> imageFiles)
@@ -150,24 +159,9 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         return ms.ToArray();
     }
 
-    private async Task<string> ExtractTextFromDocumentAsync(string filePath)
-    {
-        var extension = Path.GetExtension(filePath).ToLowerInvariant();
-        return extension switch
-        {
-            ".docx" => ExtractTextFromDocx(filePath),
-            ".doc" => ExtractTextFromDocx(filePath), // Assuming DocX can handle .doc, but may need conversion
-            ".pdf" => ExtractTextFromPdf(filePath),
-            _ => string.Empty
-        };
-    }
+   
 
-    private string ExtractTextFromDocx(string filePath)
-    {
-        using var doc = DocX.Load(filePath);
-        return doc.Text;
-    }
-
+   
     private string ExtractTextFromPdf(string filePath)
     {
         using var pdfReader = new PdfReader(filePath);
