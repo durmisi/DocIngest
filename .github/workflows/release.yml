@@ -16,6 +16,9 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Set package version
+        run: echo "VERSION=${{ github.event.release.tag_name }}" | sed 's/^v//' >> $GITHUB_ENV
+
       - name: Restore dependencies
         run: dotnet restore src/DocIngest.slnx
 
@@ -23,7 +26,7 @@ jobs:
         run: dotnet build src/DocIngest.slnx --configuration Release --no-restore
 
       - name: Pack NuGet
-        run: dotnet pack src/DocIngest.Core/DocIngest.Core.csproj --configuration Release --output ./nupkg --no-build
+        run: dotnet pack src/DocIngest.Core/DocIngest.Core.csproj --configuration Release --output ./nupkg --no-build /p:Version=$VERSION
 
       - name: Publish NuGet
         run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
