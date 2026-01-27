@@ -10,11 +10,8 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Fonts;
-using System.IO;
-using Xunit;
+using System.Runtime.InteropServices;
 using Moq;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 
 namespace DocIngest.Tests;
 
@@ -321,11 +318,12 @@ public class IntegrationTests : IDisposable
 
     private void CreateSampleImage(string path, string text)
     {
+        string fontName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Arial" : "Liberation Sans";
         using var image = new Image<Rgba32>(400, 200);
         image.Mutate(ctx =>
         {
             ctx.Fill(Color.White);
-            ctx.DrawText(text, SystemFonts.CreateFont("Liberation Sans", 20), Color.Black, new PointF(10, 10));
+            ctx.DrawText(text, SystemFonts.CreateFont(fontName, 20), Color.Black, new PointF(10, 10));
         });
         image.SaveAsPng(path);
     }
