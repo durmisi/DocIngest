@@ -32,6 +32,7 @@ public class IntegrationTests : IDisposable
         var services = new ServiceCollection();
         services.AddLogging(logging => logging.AddConsole().SetMinimumLevel(LogLevel.Debug));
         services.AddSingleton<IOcrService, TesseractOcrService>();
+        services.AddSingleton<IDocumentGenerator, DefaultDocumentGenerator>();
         services.AddTransient<DocumentProcessingMiddleware>();
         services.AddTransient<DocumentTraversalMiddleware>();
         services.AddTransient<LoggingMiddleware>();
@@ -64,7 +65,7 @@ public class IntegrationTests : IDisposable
         var builder = new PipelineBuilder();
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         builder.Use(new DocumentTraversalMiddleware(_tempInputDir, loggerFactory.CreateLogger<DocumentTraversalMiddleware>()));
-        builder.Use(new DocumentProcessingMiddleware(_serviceProvider.GetRequiredService<IOcrService>(), _serviceProvider.GetRequiredService<IConfiguration>(), loggerFactory.CreateLogger<DocumentProcessingMiddleware>()));
+        builder.Use(new DocumentProcessingMiddleware(_serviceProvider.GetRequiredService<IOcrService>(), _serviceProvider.GetRequiredService<IConfiguration>(), loggerFactory.CreateLogger<DocumentProcessingMiddleware>(), _serviceProvider.GetRequiredService<IDocumentGenerator>()));
         builder.Use(new LoggingMiddleware());
         var pipeline = builder.Build();
 

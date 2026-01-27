@@ -1,9 +1,6 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Xceed.Document.NET;
-using PdfSharp.Pdf;
-using PdfSharp.Drawing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.IO;
@@ -19,12 +16,14 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
     private readonly IOcrService _ocrService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DocumentProcessingMiddleware> _logger;
+    private readonly IDocumentGenerator _documentGenerator;
 
-    public DocumentProcessingMiddleware(IOcrService ocrService, IConfiguration configuration, ILogger<DocumentProcessingMiddleware> logger)
+    public DocumentProcessingMiddleware(IOcrService ocrService, IConfiguration configuration, ILogger<DocumentProcessingMiddleware> logger, IDocumentGenerator documentGenerator)
     {
         _ocrService = ocrService;
         _configuration = configuration;
         _logger = logger;
+        _documentGenerator = documentGenerator;
     }
 
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
@@ -79,7 +78,7 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
             var text = await _ocrService.ExtractTextAsync(combinedImage);
 
             // Generate output
-            var outputPath = await GenerateDocumentAsync(text, document.Name, outputFormat, outputDir);
+            var outputPath = await _documentGenerator.GenerateDocumentAsync(text, document.Name, outputFormat, outputDir);
             processedDocuments.Add(outputPath);
         }
 
@@ -130,43 +129,5 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         combined.Dispose();
 
         return ms.ToArray();
-    }
-
-    private async Task<string> GenerateDocumentAsync(string text, string documentName, string format, string outputDir)
-    {
-        var fileName = $"{documentName}.{format.ToLower()}";
-        var outputPath = Path.Combine(outputDir, fileName);
-
-        if (format.Equals("Word", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotSupportedException("Word format not yet implemented");
-            // using var doc = Xceed.Document.NET.DocX.Create(outputPath);
-            // doc.InsertParagraph(text);
-            // doc.Save();
-        }
-        else if (format.Equals("PDF", StringComparison.OrdinalIgnoreCase))
-        {
-            try
-            {
-                var pdf = new PdfDocument();
-                var page = pdf.AddPage();
-                var gfx = XGraphics.FromPdfPage(page);
-                var font = new XFont("Times-Roman", 12);
-                gfx.DrawString(text, font, XBrushes.Black, new XRect(10, 10, page.Width - 20, page.Height - 20), XStringFormats.TopLeft);
-                pdf.Save(outputPath);
-            }
-            catch (InvalidOperationException)
-            {
-                // Fallback to text file if font not available
-                outputPath = Path.ChangeExtension(outputPath, ".txt");
-                await File.WriteAllTextAsync(outputPath, text);
-            }
-        }
-        else
-        {
-            throw new NotSupportedException($"Output format {format} not supported");
-        }
-
-        return outputPath;
     }
 }

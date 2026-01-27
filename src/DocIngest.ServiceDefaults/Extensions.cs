@@ -7,6 +7,7 @@ using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using DocIngest.Core.Services;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -25,6 +26,8 @@ public static class Extensions
         builder.AddDefaultHealthChecks();
 
         builder.Services.AddServiceDiscovery();
+
+        builder.Services.AddSingleton<IDocumentGenerator, DefaultDocumentGenerator>();
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
