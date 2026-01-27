@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="DocIngest.ApiService/DocIngest.ApiService.csproj" />
+  <Project Path="DocIngest.AppHost/DocIngest.AppHost.csproj" />
+  <Project Path="DocIngest.ServiceDefaults/DocIngest.ServiceDefaults.csproj" />
+  <Project Path="DocIngest.Tests/DocIngest.Tests.csproj" />
+  <Project Path="DocIngest.Web/DocIngest.Web.csproj" />
+</Solution>
