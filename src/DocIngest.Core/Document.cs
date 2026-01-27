@@ -48,6 +48,11 @@ public class ProcessedFile
     /// Gets or sets the list of insights extracted from the file.
     /// </summary>
     public List<string> Insights { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the category of the file.
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
 }
 
 /// <summary>

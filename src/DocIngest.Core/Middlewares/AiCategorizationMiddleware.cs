@@ -55,7 +55,7 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
                 {
                     var messages = new List<ChatMessage>
                     {
-                        new ChatMessage(ChatRole.User, $"Categorize the following document content. Provide a JSON response with 'tags' as an array of strings (e.g., ['invoice', 'finance']) and 'insights' as an array of strings (key insights like 'Total Amount: $100', 'Date: 2023-01-01').\n\nContent:\n{text}")
+                        new ChatMessage(ChatRole.User, $"Categorize the following document content. Provide a JSON response with 'category' as a string (e.g., 'invoice'), 'tags' as an array of strings (e.g., ['finance', 'receipt']) and 'insights' as an array of strings (key insights like 'Total Amount: $100', 'Date: 2023-01-01').\n\nContent:\n{text}")
                     };
 
                     var response = await _chatClient.GetResponseAsync(messages);
@@ -63,11 +63,12 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
 
                     if (result != null)
                     {
+                        processedFile.Category = result.Category ?? string.Empty;
                         processedFile.Tags = result.Tags ?? new List<string>();
                         processedFile.Insights = result.Insights ?? new List<string>();
                     }
 
-                    _logger.LogInformation($"Categorized file {processedFile.Path} with {processedFile.Tags.Count} tags and {processedFile.Insights.Count} insights");
+                    _logger.LogInformation($"Categorized file {processedFile.Path} with category '{processedFile.Category}', {processedFile.Tags.Count} tags and {processedFile.Insights.Count} insights");
                 }
                 catch (Exception ex)
                 {
@@ -75,6 +76,8 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
                 }
             }
         }
+
+        context.Items["Documents"] = documents;
 
         _logger.LogInformation("AI categorization completed");
         await next(context);
@@ -139,6 +142,7 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
 
     private class AiResponse
     {
+        public string? Category { get; set; }
         public List<string>? Tags { get; set; }
         public List<string>? Insights { get; set; }
     }
