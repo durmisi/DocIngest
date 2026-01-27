@@ -1,4 +1,5 @@
 using DocIngest.Core;
+using DocIngest.Core.Services;
 using DocIngest.Core.Middlewares;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,7 @@ builder.AddServiceDefaults();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddSingleton<IOcrService, TesseractOcrService>();
 
 var app = builder.Build();
 
@@ -21,12 +23,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // Example pipeline usage
-app.MapGet("/process", async ([FromServices] ILogger<Program> logger) =>
+app.MapGet("/process", async ([FromServices] ILogger<Program> logger, [FromServices] IOcrService ocrService, [FromServices] IConfiguration config, [FromServices] ILogger<DocumentProcessingMiddleware> docLogger) =>
 {
     var pipelineBuilder = new PipelineBuilder();
     pipelineBuilder.Use(new LoggingMiddleware());
     string documentsFolder = "C:\\Temp\\Documents"; 
-    pipelineBuilder.Use(new FolderTraversalMiddleware(documentsFolder, logger));
+    pipelineBuilder.Use(new DocumentTraversalMiddleware(documentsFolder, logger));
+    pipelineBuilder.Use(new DocumentProcessingMiddleware(ocrService, config, docLogger));
     pipelineBuilder.Use(async (context, next) =>
     {
         context.Items["Step1"] = "Value from Step1";

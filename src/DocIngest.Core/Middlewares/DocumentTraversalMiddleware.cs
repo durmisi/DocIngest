@@ -9,17 +9,17 @@ namespace DocIngest.Core.Middlewares;
 /// Middleware that traverses a root folder, identifies subfolders, and collects all files from each subfolder,
 /// treating each subfolder as one document with related files.
 /// </summary>
-public class FolderTraversalMiddleware : IPipelineMiddleware
+public class DocumentTraversalMiddleware : IPipelineMiddleware
 {
     private readonly string _rootFolderPath;
     private readonly ILogger? _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FolderTraversalMiddleware"/> class.
+    /// Initializes a new instance of the <see cref="DocumentTraversalMiddleware"/> class.
     /// </summary>
     /// <param name="rootFolderPath">The path to the root folder to traverse.</param>
     /// <param name="logger">Optional logger for error handling.</param>
-    public FolderTraversalMiddleware(string rootFolderPath, ILogger? logger = null)
+    public DocumentTraversalMiddleware(string rootFolderPath, ILogger? logger = null)
     {
         _rootFolderPath = rootFolderPath ?? throw new ArgumentNullException(nameof(rootFolderPath));
         _logger = logger;
