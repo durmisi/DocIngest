@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace DocIngest.Core.Middlewares;
 
@@ -7,6 +8,13 @@ namespace DocIngest.Core.Middlewares;
 /// </summary>
 public class LoggingMiddleware : IPipelineMiddleware
 {
+    private readonly ILogger<LoggingMiddleware> _logger;
+
+    public LoggingMiddleware(ILogger<LoggingMiddleware> logger)
+    {
+        _logger = logger;
+    }
+
     /// <summary>
     /// Invokes the logging middleware.
     /// </summary>
@@ -15,8 +23,8 @@ public class LoggingMiddleware : IPipelineMiddleware
     /// <returns>A task.</returns>
     public async Task InvokeAsync(PipelineContext context, PipelineDelegate next)
     {
-        Console.WriteLine("Before processing");
+        _logger.LogInformation("Before processing");
         await next(context);
-        Console.WriteLine("After processing");
+        _logger.LogInformation("After processing");
     }
 }

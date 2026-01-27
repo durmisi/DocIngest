@@ -66,7 +66,7 @@ public class IntegrationTests : IDisposable
         var loggerFactory = _serviceProvider.GetRequiredService<ILoggerFactory>();
         builder.Use(new DocumentTraversalMiddleware(_tempInputDir, loggerFactory.CreateLogger<DocumentTraversalMiddleware>()));
         builder.Use(new DocumentProcessingMiddleware(_serviceProvider.GetRequiredService<IOcrService>(), _serviceProvider.GetRequiredService<IConfiguration>(), loggerFactory.CreateLogger<DocumentProcessingMiddleware>(), _serviceProvider.GetRequiredService<IDocumentGenerator>()));
-        builder.Use(new LoggingMiddleware());
+        builder.Use(_serviceProvider.GetRequiredService<LoggingMiddleware>());
         var pipeline = builder.Build();
 
         // Act: Execute pipeline
