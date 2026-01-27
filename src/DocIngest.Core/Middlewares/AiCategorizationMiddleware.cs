@@ -6,9 +6,7 @@ using System.Collections.Generic;
 using DocIngest.Core.Services;
 using System.IO;
 using Xceed.Words.NET;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using UglyToad.PdfPig;
 
 namespace DocIngest.Core.Middlewares;
 
@@ -129,14 +127,11 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
 
     private string ExtractTextFromPdf(string filePath)
     {
-        using var pdfReader = new PdfReader(filePath);
-        using var pdfDoc = new PdfDocument(pdfReader);
-        var strategy = new SimpleTextExtractionStrategy();
+        using var document = PdfDocument.Open(filePath);
         var extractedText = string.Empty;
-        for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
+        foreach (var page in document.GetPages())
         {
-            var page = pdfDoc.GetPage(i);
-            extractedText += PdfTextExtractor.GetTextFromPage(page, strategy);
+            extractedText += page.Text;
         }
         return extractedText;
     }
