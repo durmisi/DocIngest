@@ -40,7 +40,7 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         }
 
         var outputFormat = _configuration.GetValue<string>("ImageProcessing:OutputFormat") ?? "Word";
-        var outputDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
+        var outputDir = context.Items.ContainsKey("OutputDirectory") ? context.Items["OutputDirectory"] as string : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
         Directory.CreateDirectory(outputDir);
 
         var processedDocuments = new List<string>();
@@ -146,12 +146,21 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         }
         else if (format.Equals("PDF", StringComparison.OrdinalIgnoreCase))
         {
-            var pdf = new PdfDocument();
-            var page = pdf.AddPage();
-            var gfx = XGraphics.FromPdfPage(page);
-            var font = new XFont("Arial", 12);
-            gfx.DrawString(text, font, XBrushes.Black, new XRect(10, 10, page.Width - 20, page.Height - 20), XStringFormats.TopLeft);
-            pdf.Save(outputPath);
+            try
+            {
+                var pdf = new PdfDocument();
+                var page = pdf.AddPage();
+                var gfx = XGraphics.FromPdfPage(page);
+                var font = new XFont("Times-Roman", 12);
+                gfx.DrawString(text, font, XBrushes.Black, new XRect(10, 10, page.Width - 20, page.Height - 20), XStringFormats.TopLeft);
+                pdf.Save(outputPath);
+            }
+            catch (InvalidOperationException)
+            {
+                // Fallback to text file if font not available
+                outputPath = Path.ChangeExtension(outputPath, ".txt");
+                await File.WriteAllTextAsync(outputPath, text);
+            }
         }
         else
         {
