@@ -99,6 +99,7 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
                 ".docx" => ExtractTextFromDocx(filePath),
                 ".doc" => ExtractTextFromDocx(filePath), // Assuming DocX can handle .doc
                 ".pdf" => ExtractTextFromPdf(filePath),
+                ".txt" => File.ReadAllText(filePath),
                 _ => string.Empty
             };
         }
@@ -116,7 +117,7 @@ public class AiCategorizationMiddleware : IPipelineMiddleware
 
     private bool IsDocumentFile(string fileName)
     {
-        var extensions = new[] { ".docx", ".doc", ".pdf" };
+        var extensions = new[] { ".docx", ".doc", ".pdf", ".txt" };
         return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
     }
 

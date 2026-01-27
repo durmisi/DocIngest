@@ -14,7 +14,8 @@ public class DefaultDocumentGenerator : IDocumentGenerator
 {
     public async Task<string> GenerateDocumentAsync(string text, string documentName, string format, string outputDir)
     {
-        var fileName = $"{documentName}.{format.ToLower()}";
+        var extension = format.Equals("Word", StringComparison.OrdinalIgnoreCase) ? "docx" : format.ToLower();
+        var fileName = $"{documentName}.{extension}";
         var outputPath = Path.Combine(outputDir, fileName);
 
         if (format.Equals("Word", StringComparison.OrdinalIgnoreCase))
