@@ -48,6 +48,10 @@ public class DefaultDocumentGenerator : IDocumentGenerator
                 await File.WriteAllTextAsync(outputPath, text);
             }
         }
+        else if (format.Equals("TXT", StringComparison.OrdinalIgnoreCase))
+        {
+            await File.WriteAllTextAsync(outputPath, text);
+        }
         else
         {
             throw new NotSupportedException($"Output format {format} not supported");

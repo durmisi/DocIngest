@@ -44,13 +44,13 @@ public class IntegrationTests : IDisposable
         services.AddTransient<DeliveryMiddleware>();
         services.AddSingleton<IDeliveryService>(sp => new FolderDeliveryService(Path.Combine(_tempOutputDir, "delivered"), sp.GetRequiredService<ILogger<FolderDeliveryService>>()));
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { { "ImageProcessing:OutputFormat", "PDF" } })
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "ImageProcessing:OutputFormat", "TXT" } })
             .Build());
 
         // Mock IChatClient for AI categorization
         var mockChatClient = new Mock<IChatClient>();
         mockChatClient.Setup(c => c.GetResponseAsync(It.IsAny<IList<ChatMessage>>(), It.IsAny<ChatOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ChatResponse(new[] { new ChatMessage(ChatRole.Assistant, "{\"category\":\"invoice\",\"tags\":[\"finance\",\"receipt\"],\"insights\":[\"Total Amount: $100\",\"Date: 2023-01-01\"]}") }));
+            .ReturnsAsync(new ChatResponse(new[] { new ChatMessage(ChatRole.Assistant, "{\"Category\":\"invoice\",\"Tags\":[\"finance\",\"receipt\"],\"Insights\":[\"Total Amount: $100\",\"Date: 2023-01-01\"]}") }));
         services.AddSingleton(mockChatClient.Object);
 
         // Mock IOcrService for reliable OCR in tests
@@ -235,7 +235,7 @@ public class IntegrationTests : IDisposable
         services.AddTransient<DeliveryMiddleware>();
         services.AddSingleton<IDeliveryService>(sp => new FolderDeliveryService(Path.Combine(_tempOutputDir, "delivered"), sp.GetRequiredService<ILogger<FolderDeliveryService>>()));
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { { "ImageProcessing:OutputFormat", "PDF" } })
+            .AddInMemoryCollection(new Dictionary<string, string?> { { "ImageProcessing:OutputFormat", "TXT" } })
             .Build());
         services.AddSingleton(mockChatClient.Object);
 
