@@ -19,6 +19,8 @@ DocIngest processes these inputs by:
 
 This pipeline reduces manual effort, minimizes errors, and enables intelligent routing—perfect for automating document-heavy processes in finance, legal, or administrative domains.
 
+![DocIngest Pipeline](docs/idea.png)
+
 ## Flexibility and Extensibility
 
 DocIngest's architecture emphasizes flexibility, allowing you to adapt it to diverse workflows without rewriting core logic. Built on a pipeline pattern with dependency injection (DI), it supports:
