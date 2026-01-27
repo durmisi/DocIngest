@@ -325,7 +325,7 @@ public class IntegrationTests : IDisposable
         image.Mutate(ctx =>
         {
             ctx.Fill(Color.White);
-            ctx.DrawText(text, SystemFonts.CreateFont("Arial", 20), Color.Black, new PointF(10, 10));
+            ctx.DrawText(text, SystemFonts.CreateFont("Liberation Sans", 20), Color.Black, new PointF(10, 10));
         });
         image.SaveAsPng(path);
     }
