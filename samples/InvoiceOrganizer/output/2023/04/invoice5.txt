@@ -1,0 +1,4 @@
+Invoice Number: 005
+Date: 2023-04-12
+Amount: $150.00
+Description: Supplies for April

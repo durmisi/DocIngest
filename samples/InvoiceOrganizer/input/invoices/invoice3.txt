@@ -1,0 +1,4 @@
+Invoice Number: 003
+Date: 2023-01-10
+Amount: $75.00
+Description: Miscellaneous expenses for January

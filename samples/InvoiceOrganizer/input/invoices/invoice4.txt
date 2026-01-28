@@ -1,0 +1,4 @@
+Invoice Number: 004
+Date: 2023-03-05
+Amount: $200.00
+Description: Services for March

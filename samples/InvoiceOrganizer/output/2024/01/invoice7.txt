@@ -1,0 +1,4 @@
+Invoice Number: 007
+Date: 2024-01-22
+Amount: $250.00
+Description: Annual maintenance for January 2024

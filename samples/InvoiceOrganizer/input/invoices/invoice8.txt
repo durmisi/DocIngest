@@ -1,0 +1,4 @@
+Invoice Number: 008
+Date: 2024-06-10
+Amount: $175.00
+Description: Consulting services for June 2024

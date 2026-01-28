@@ -120,6 +120,42 @@ public class DocumentTraversalMiddleware : IPipelineMiddleware
             // If root folder is inaccessible, we can still proceed or halt; for now, proceed with empty list
         }
 
+        // If no subfolders, treat files in root as individual documents
+        if (!documents.Any())
+        {
+            try
+            {
+                foreach (var filePath in Directory.EnumerateFiles(_rootFolderPath))
+                {
+                    try
+                    {
+                        var fileInfo = new System.IO.FileInfo(filePath);
+                        var document = new Document
+                        {
+                            Path = filePath,
+                            Name = fileInfo.Name
+                        };
+                        document.Files.Add(new FileInfo
+                        {
+                            Path = filePath,
+                            Name = fileInfo.Name,
+                            LastModified = fileInfo.LastWriteTime,
+                            Size = fileInfo.Length
+                        });
+                        documents.Add(document);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogWarning(ex, "Failed to process file: {FilePath}", filePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to enumerate files in root folder: {RootFolder}", _rootFolderPath);
+            }
+        }
+
         // Store the documents in the context
         context.Items["Documents"] = documents;
 

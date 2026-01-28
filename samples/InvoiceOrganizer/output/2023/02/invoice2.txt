@@ -1,0 +1,4 @@
+Invoice Number: 002
+Date: 2023-02-20
+Amount: $250.00
+Description: Software licenses for February

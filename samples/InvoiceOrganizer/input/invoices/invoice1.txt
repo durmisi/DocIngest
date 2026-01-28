@@ -1,0 +1,4 @@
+Invoice Number: 001
+Date: 2023-01-15
+Amount: $150.00
+Description: Office supplies for January

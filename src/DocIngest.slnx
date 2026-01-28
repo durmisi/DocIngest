@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../samples/InvoiceOrganizer/InvoiceOrganizer.csproj" />
   <Project Path="DocIngest.Core/DocIngest.Core.csproj" />
   <Project Path="DocIngest.Tests/DocIngest.Tests.csproj" />
 </Solution>

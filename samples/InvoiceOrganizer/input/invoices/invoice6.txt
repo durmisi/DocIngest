@@ -1,0 +1,4 @@
+Invoice Number: 006
+Date: 2023-05-18
+Amount: $300.00
+Description: Equipment for May

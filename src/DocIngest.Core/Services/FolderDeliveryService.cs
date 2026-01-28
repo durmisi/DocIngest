@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace DocIngest.Core.Services;
 
@@ -28,6 +29,8 @@ public class FolderDeliveryService : IDeliveryService
         var organizationKey = GetOrganizationKey(document, organizationCriteria);
         var targetDir = organizationCriteria.ToLowerInvariant() == "name"
             ? Path.Combine(_baseDeliveryPath, organizationKey)
+            : organizationCriteria.ToLowerInvariant() == "month"
+            ? Path.Combine(_baseDeliveryPath, organizationKey)
             : Path.Combine(_baseDeliveryPath, organizationKey, document.Name);
         Directory.CreateDirectory(targetDir);
 
@@ -49,7 +52,7 @@ public class FolderDeliveryService : IDeliveryService
             "type" => document.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault() ?? "unknown",
             "date" => dirInfo.CreationTime.ToString("yyyy-MM-dd"),
             "year" => dirInfo.CreationTime.ToString("yyyy"),
-            "month" => dirInfo.CreationTime.ToString("yyyy-MM"),
+            "month" => document.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault(t => Regex.IsMatch(t, @"\d{4}/\d{2}")) ?? dirInfo.CreationTime.ToString("yyyy-MM"),
             "name" => document.Name,
             _ => dirInfo.CreationTime.ToString("yyyy-MM-dd") // default to date
         };
