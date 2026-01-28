@@ -9,5 +9,4 @@ public class PipelineContext
     /// A dictionary for storing shared properties that can be updated by pipeline steps.
     /// </summary>
     public IDictionary<string, object> Items { get; } = new Dictionary<string, object>();
-
 }

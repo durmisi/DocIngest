@@ -1,9 +1,6 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Xceed.Words.NET;
-using PdfSharp.Pdf;
 using PdfSharp.Drawing;
+using PdfSharp.Pdf;
+using Xceed.Words.NET;
 
 namespace DocIngest.Core.Services;
 

@@ -1,16 +1,16 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.AI;
-using OpenAI;
 using DocIngest.Core;
 using DocIngest.Core.Middlewares;
 using DocIngest.Core.Services;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 var inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input/invoices");
 var outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output");
@@ -60,7 +60,18 @@ builder.Use(new DeliveryMiddleware(deliveryService, deliveryLogger));
 var pipeline = builder.Build();
 
 var context = new PipelineContext();
-context.Items["OrganizationCriteria"] = "month";
+// Define organization function for "month" logic
+Func<Document, string> organizationFunc = (doc) =>
+{
+    var tag = doc.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault(t => Regex.IsMatch(t, @"\d{4}/\d{2}"));
+    if (tag != null)
+    {
+        return tag; // e.g., "2023/01"
+    }
+    var dirInfo = new DirectoryInfo(doc.Path);
+    return dirInfo.CreationTime.ToString("yyyy-MM");
+};
+context.Items["OrganizationPathFunc"] = organizationFunc;
 context.Items["OutputDirectory"] = tempPath;
 
 await pipeline(context);

@@ -1,17 +1,16 @@
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using DocIngest.Core;
-using DocIngest.Core.Services;
 using DocIngest.Core.Middlewares;
+using DocIngest.Core.Services;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
+using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.Fonts;
 using System.Runtime.InteropServices;
-using Moq;
 
 namespace DocIngest.Tests;
 
@@ -167,7 +166,17 @@ public class IntegrationTests : IDisposable
 
         var context = new PipelineContext();
         context.Items["OutputDirectory"] = _tempOutputDir;
-        context.Items["OrganizationCriteria"] = criteria;
+        // Set organization func based on criteria
+        Func<Document, string> organizationFunc = criteria.ToLowerInvariant() switch
+        {
+            "type" => doc => $"{doc.ProcessedFiles.FirstOrDefault()?.Tags.FirstOrDefault() ?? "unknown"}/OrgTestDoc",
+            "date" => doc => $"{new DirectoryInfo(doc.Path).CreationTime.ToString("yyyy-MM-dd")}/OrgTestDoc",
+            "year" => doc => $"{new DirectoryInfo(doc.Path).CreationTime.ToString("yyyy")}/OrgTestDoc",
+            "month" => doc => $"{new DirectoryInfo(doc.Path).CreationTime.ToString("yyyy-MM")}/OrgTestDoc",
+            "name" => doc => doc.Name,
+            _ => doc => $"{new DirectoryInfo(doc.Path).CreationTime.ToString("yyyy-MM-dd")}/OrgTestDoc"
+        };
+        context.Items["OrganizationPathFunc"] = organizationFunc;
 
         // Build pipeline
         var builder = new PipelineBuilder();

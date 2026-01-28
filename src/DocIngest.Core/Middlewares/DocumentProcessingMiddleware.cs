@@ -1,13 +1,11 @@
+using DocIngest.Core.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.IO;
-using DocIngest.Core.Services;
-using Xceed.Words.NET;
-using UglyToad.PdfPig;
 using System.Text.RegularExpressions;
+using UglyToad.PdfPig;
 
 namespace DocIngest.Core.Middlewares;
 
@@ -106,10 +104,8 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         return extensions.Any(ext => fileName.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
     }
 
-   
     private bool IsPdfFile(string fileName) => fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
-    
     private int GetPageNumber(string fileName)
     {
         var match = Regex.Match(fileName, @"\d+");
@@ -157,9 +153,6 @@ public class DocumentProcessingMiddleware : IPipelineMiddleware
         return ms.ToArray();
     }
 
-   
-
-   
     private string ExtractTextFromPdf(string filePath)
     {
         using var document = PdfDocument.Open(filePath);

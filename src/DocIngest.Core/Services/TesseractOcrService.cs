@@ -1,5 +1,4 @@
 using Tesseract;
-using System.Net.Http;
 
 namespace DocIngest.Core.Services;
 
