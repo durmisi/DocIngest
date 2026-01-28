@@ -48,11 +48,11 @@ The InvoiceOrganizer sample demonstrates organizing invoices by date. It process
 
 DocIngest's architecture emphasizes flexibility, allowing you to adapt it to diverse workflows without rewriting core logic. Built on a pipeline pattern with dependency injection (DI), it supports:
 
-The following Mermaid diagram illustrates how developers can build custom pipelines by chaining middlewares using the `PipelineBuilder`:
+The following Mermaid diagram illustrates how you can build custom pipelines by chaining middlewares using the `PipelineBuilder`:
 
 ```mermaid
 graph TD
-    A[Developer] --> B[Create PipelineBuilder]
+    A --> B[Create PipelineBuilder]
     B --> C[UseMiddleware: DocumentTraversalMiddleware]
     C --> D[UseMiddleware: DocumentProcessingMiddleware]
     D --> E[UseMiddleware: CustomValidationMiddleware]
