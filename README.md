@@ -48,6 +48,29 @@ The InvoiceOrganizer sample demonstrates organizing invoices by date. It process
 
 DocIngest's architecture emphasizes flexibility, allowing you to adapt it to diverse workflows without rewriting core logic. Built on a pipeline pattern with dependency injection (DI), it supports:
 
+The following Mermaid diagram illustrates how developers can build custom pipelines by chaining middlewares using the `PipelineBuilder`:
+
+```mermaid
+graph TD
+    A[Developer] --> B[Create PipelineBuilder]
+    B --> C[UseMiddleware: DocumentTraversalMiddleware]
+    C --> D[UseMiddleware: DocumentProcessingMiddleware]
+    D --> E[UseMiddleware: CustomValidationMiddleware]
+    E --> F[UseMiddleware: AiCategorizationMiddleware]
+    F --> G[UseMiddleware: CustomDeliveryMiddleware]
+    G --> H[Build Pipeline]
+    H --> I[Pipeline Ready for Execution]
+    I --> J[Execute with PipelineContext]
+
+    K[Optional: Skip AI] --> L[Remove AiCategorizationMiddleware]
+    L --> H
+
+    M[Optional: Add Parallel Processing] --> N[Insert ParallelMiddleware]
+    N --> E
+```
+
+This diagram shows the modular nature of the pipeline, where middlewares can be added, removed, or reordered to suit specific needs. For example, you can skip AI categorization for simple workflows or insert custom middlewares for validation, encryption, or domain-specific logic.
+
 - **Service Replacement**: Core services are defined by interfaces, enabling easy swaps. For example:
   - Replace the OCR service (default: Tesseract) with Azure Computer Vision or Google Cloud Vision.
   - Swap the document generator (default: DocX/PDFsharp) for custom formats or integrations.
