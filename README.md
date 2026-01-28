@@ -22,6 +22,28 @@ This pipeline reduces manual effort, minimizes errors, and enables intelligent r
 ![DocIngest Pipeline](docs/idea.png)
 ![Invoice Organizer](docs/invoice-organizer.png)
 
+## Getting Started
+
+### Prerequisites
+
+- .NET 10.0 SDK
+- Tesseract OCR (download from [GitHub](https://github.com/UB-Mannheim/tesseract/wiki))
+- Optional: OpenAI API key for AI categorization
+
+### Installation
+
+Install the NuGet package: `Install-Package DocIngest.Core`
+
+For samples, clone the repository and navigate to the sample folder.
+
+### Quick Start
+
+Run the InvoiceOrganizer sample: Place invoice files in `input/invoices/`, run `dotnet run` in [samples/InvoiceOrganizer/](samples/InvoiceOrganizer/), view organized output in `output/`.
+
+## Sample Application
+
+The InvoiceOrganizer sample demonstrates organizing invoices by date. It processes subfolders in `input/invoices/` as logical documents, extracts text via OCR, combines multi-page files, parses dates, and delivers organized outputs to `output/` (e.g., 2023/01/). See [samples/InvoiceOrganizer/Program.cs](samples/InvoiceOrganizer/Program.cs) and [samples/InvoiceOrganizer/appsettings.json](samples/InvoiceOrganizer/appsettings.json) for implementation.
+
 ## Flexibility and Extensibility
 
 DocIngest's architecture emphasizes flexibility, allowing you to adapt it to diverse workflows without rewriting core logic. Built on a pipeline pattern with dependency injection (DI), it supports:
@@ -51,7 +73,7 @@ DocIngest is distributed as a NuGet package (`DocIngest.Core`, version 1.0.0), m
 - **Symbols and Debugging**: Includes symbol packages (.snupkg) for enhanced debugging in IDEs like Visual Studio.
 - **Installation**: Add via NuGet Package Manager: `Install-Package DocIngest.Core`.
 
-The package supports both development and production use, with tests (xUnit, Moq) ensuring reliability.
+The package supports both development and production use, with tests (xUnit, Moq) ensuring reliability. Samples are included in the repository for hands-on learning.
 
 ## Usage Examples
 
@@ -59,29 +81,27 @@ The package supports both development and production use, with tests (xUnit, Moq
 
 ```csharp
 using DocIngest.Core;
-using Microsoft.Extensions.AI;
 
-// Configure services (use DI container in real apps)
+// Configure services
 var ocrService = new TesseractOcrService();
 var documentGenerator = new DefaultDocumentGenerator();
 var deliveryService = new FolderDeliveryService();
-var aiClient = new OllamaChatClient(new Uri("http://localhost:11434"), "llama3.2"); // Or Azure OpenAI
 
-// Build pipeline
+// Build pipeline (without AI for simplicity)
 var pipeline = new PipelineBuilder()
     .UseMiddleware(new DocumentTraversalMiddleware())
     .UseMiddleware(new DocumentProcessingMiddleware(ocrService, documentGenerator))
-    .UseMiddleware(new AiCategorizationMiddleware(aiClient))
+    .UseMiddleware(new DateParsingMiddleware())
     .UseMiddleware(new DeliveryMiddleware(deliveryService))
-    .UseMiddleware(new LoggingMiddleware())
     .Build();
 
 // Execute
 var context = new PipelineContext
 {
-    ["InputPath"] = @"C:\DropLocation",
-    ["OutputPath"] = @"C:\ProcessedDocuments",
-    ["OrganizationCriteria"] = "date,type" // Organize by date and first tag
+    ["InputPath"] = "input/documents",
+    ["OutputPath"] = "output",
+    ["OrganizationPathFunc"] = (Func<OutputDocument, string>)(doc =>
+        doc.Tags.FirstOrDefault(t => t.StartsWith("date/"))?.Replace("date/", "") ?? "unknown")
 };
 
 await pipeline(context);
@@ -132,13 +152,80 @@ var ocrService = new CustomOcrService();
 // Use in DocumentProcessingMiddleware
 ```
 
+### Running the Sample Pipeline
+
+Based on InvoiceOrganizer, configure services and run:
+
+```csharp
+// Configure services (simplified from sample's DI)
+var ocrService = new TesseractOcrService();
+var documentGenerator = new DefaultDocumentGenerator();
+var deliveryService = new FolderDeliveryService();
+
+// Build pipeline
+var pipeline = new PipelineBuilder()
+    .UseMiddleware(new DocumentTraversalMiddleware())
+    .UseMiddleware(new DocumentProcessingMiddleware(ocrService, documentGenerator))
+    .UseMiddleware(new DateParsingMiddleware())
+    .UseMiddleware(new DeliveryMiddleware(deliveryService))
+    .Build();
+
+// Execute (similar to sample)
+var context = new PipelineContext
+{
+    ["InputPath"] = "input/invoices",
+    ["OutputPath"] = "output",
+    ["OrganizationPathFunc"] = (Func<OutputDocument, string>)(doc =>
+        Path.Combine(doc.Tags.FirstOrDefault(t => t.StartsWith("date/"))?.Replace("date/", "") ?? "unknown", doc.Category))
+};
+
+await pipeline(context);
+```
+
+## Samples
+
+The [samples/](samples/) folder provides example applications demonstrating DocIngest use cases. Clone the repository to explore and modify them.
+
+### Invoice Organization
+
+The InvoiceOrganizer sample processes invoices from a drop folder, using OCR to extract text, parsing dates for organization, and delivering to structured folders. It shows extensibility by allowing service swaps (e.g., replace Tesseract with Azure OCR) and middleware additions (e.g., custom date parsing). Run with `dotnet run` in [samples/InvoiceOrganizer/](samples/InvoiceOrganizer/).
+
+### Future Samples
+
+Planned samples include contract management (demonstrating AI categorization for legal clauses) and receipt aggregation (showing multi-page handling and custom organization by vendor/amount).
+
+### Getting Started with Samples
+
+After installing DocIngest.Core via NuGet, explore samples to understand integrations. Each sample includes setup instructions in its folder.
+
+## Configuration
+
+Configure DocIngest via `appsettings.json` or environment variables.
+
+- **appsettings.json**: Set `ImageProcessing:OutputFormat` (e.g., "Word", "PDF").
+- **Environment Variables**: `OPENAI_API_KEY` for AI features.
+- **PipelineContext**: Use keys like `OrganizationPathFunc` for custom organization logic.
+
 ## Architecture Overview
 
 - **Data Models**: `Document` (logical document), `OutputDocument` (processed file with metadata), `FileMetadata` (file details).
-- **Pipeline**: Delegate-based chain of middlewares, executed in reverse order.
+- **Pipeline**: Delegate-based chain of middlewares, executed in reverse order. `PipelineContext` is a shared dictionary for passing data (e.g., documents list, output paths) between middlewares.
 - **Services**: Interfaces (`IOcrService`, `IDocumentGenerator`, `IDeliveryService`) for pluggability.
 - **AI Integration**: Uses `IChatClient` for categorization prompts, returning JSON with category, tags, and insights.
 
+## Building and Testing
+
+- **Build**: Run `dotnet build` in the root or specific project folders.
+- **Test**: Run `dotnet test` in [DocIngest.Tests/](DocIngest.Tests/) to execute unit tests.
+- **Package**: Run `dotnet pack` to create NuGet packages.
+
 ## Contributing
 
-Contributions are welcome! Extend middlewares, add services, or improve AI prompts. Ensure tests pass and follow the modular design.
+Contributions are welcome! Extend middlewares, add services, or improve AI prompts. Add new samples for additional document types to expand use cases. Ensure tests pass and follow the modular design.
+
+## Troubleshooting
+
+- **Tesseract Not Found**: Ensure Tesseract is installed and in PATH.
+- **AI API Errors**: Check `OPENAI_API_KEY` or AI client configuration.
+- **Font Issues in Tests**: Install required fonts for PDF generation.
+- Enable AI in samples by uncommenting `AiCategorizationMiddleware` and setting the API key.
