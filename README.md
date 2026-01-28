@@ -64,9 +64,6 @@ graph TD
 
     K[Optional: Skip AI] --> L[Remove AiCategorizationMiddleware]
     L --> H
-
-    M[Optional: Add Parallel Processing] --> N[Insert ParallelMiddleware]
-    N --> E
 ```
 
 This diagram shows the modular nature of the pipeline, where middlewares can be added, removed, or reordered to suit specific needs. For example, you can skip AI categorization for simple workflows or insert custom middlewares for validation, encryption, or domain-specific logic.
