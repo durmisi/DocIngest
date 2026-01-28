@@ -52,7 +52,7 @@ The following Mermaid diagram illustrates how you can build custom pipelines by 
 
 ```mermaid
 graph TD
-    A --> B[Create PipelineBuilder]
+    B[Create PipelineBuilder]
     B --> C[UseMiddleware: DocumentTraversalMiddleware]
     C --> D[UseMiddleware: DocumentProcessingMiddleware]
     D --> E[UseMiddleware: CustomValidationMiddleware]
