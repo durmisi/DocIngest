@@ -20,6 +20,7 @@ DocIngest processes these inputs by:
 This pipeline reduces manual effort, minimizes errors, and enables intelligent routing—perfect for automating document-heavy processes in finance, legal, or administrative domains.
 
 ![DocIngest Pipeline](docs/idea.png)
+![Invoice Organizer](docs/invoice-organizer.png)
 
 ## Flexibility and Extensibility
 
